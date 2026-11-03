@@ -3,7 +3,7 @@ import { Flame, Moon, SkipForward, ChevronRight, Timer, Info, Repeat2, Trash2, P
 import { C, pillBtn, bigBtn, ghostBtn } from "./theme.js";
 import { TEMPLATES, FREE_ROTATION, LIBRARY } from "./program.js";
 import { fmt } from "./dates.js";
-import { templateSetCount, e1rm, unitLabel } from "./engine.js";
+import { templateSetCount, e1rm, unitLabel, setText } from "./engine.js";
 import { Hex, Sun, Card, Label, Title, BackBtn, Badge, Screen, Sheet, SetRow } from "./ui.jsx";
 import { gradCool } from "./theme.js";
 
@@ -36,7 +36,7 @@ function Carousel({ slides }) {
   );
 }
 
-function PreviewCard({ item }) {
+function PreviewCard({ item, onPreview }) {
   const { date, plan } = item;
   const rest = plan.kind === "rest";
   const tpl = TEMPLATES[plan.templateKey];
@@ -58,6 +58,7 @@ function PreviewCard({ item }) {
           {tpl.slots.map((sl) => (
             <p key={sl.name} style={{ margin: "0 0 3px", color: C.text, fontSize: 13 }}>· {sl.name}</p>
           ))}
+          <button onClick={() => onPreview(plan.templateKey)} style={{ ...ghostBtn, marginTop: 12 }}>View sets and weights</button>
         </>
       )}
     </Card>
@@ -66,7 +67,7 @@ function PreviewCard({ item }) {
 
 
 
-export function TrainHome({ plan, handled, doneToday, targetDate, quote, active, streak, backupDue, onStart, onResume, onSkip, onManual, onSwitch, onBackup, score, level, nextLevel, upcoming, onScore }) {
+export function TrainHome({ plan, handled, doneToday, targetDate, quote, active, streak, backupDue, onStart, onResume, onSkip, onManual, onSwitch, onBackup, score, level, nextLevel, upcoming, onScore, onPreview }) {
   const isRest = plan.kind === "rest";
   const tpl = TEMPLATES[plan.templateKey];
   const head = active ? "IN PROGRESS" : handled ? "UP NEXT · " + fmt(targetDate).toUpperCase() : "TODAY";
@@ -100,6 +101,7 @@ export function TrainHome({ plan, handled, doneToday, targetDate, quote, active,
               <p style={{ margin: "0 0 14px", color: C.muted, fontSize: 13 }}>{tpl.slots.length} exercises · about {templateSetCount(plan.templateKey)} sets</p>
 
               <button onClick={() => onStart(plan.templateKey)} style={bigBtn(true)}>Start workout</button>
+              <button onClick={() => onPreview(plan.templateKey)} style={{ ...ghostBtn, marginTop: 10 }}>View workout</button>
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
                 <button onClick={() => onSkip({ name: tpl.name, type: plan.class ? "class" : "free", templateKey: plan.templateKey })} style={{ ...ghostBtn, flex: 1 }}>
                   <SkipForward size={14} /> Skip
@@ -153,7 +155,7 @@ export function TrainHome({ plan, handled, doneToday, targetDate, quote, active,
         <Carousel
           slides={[
             card0,
-            ...upcoming.map((u) => <PreviewCard key={u.date} item={u} />),
+            ...upcoming.map((u) => <PreviewCard key={u.date} item={u} onPreview={onPreview} />),
           ]}
         />
 
@@ -169,6 +171,30 @@ export function TrainHome({ plan, handled, doneToday, targetDate, quote, active,
         </div>
       </div>
     </div>
+  );
+}
+
+export function PreviewSheet({ workout, title, onClose, onStart }) {
+  return (
+    <Sheet onClose={onClose}>
+      <p style={{ margin: "0 0 4px", color: C.text, fontSize: 22, fontWeight: 800, fontStyle: "italic" }}>{workout.name}</p>
+      <p style={{ margin: "0 0 14px", color: C.muted, fontSize: 12 }}>{title}</p>
+      {workout.exercises.map((ex) => {
+        const w = ex.sets.filter((s) => s.type === "work");
+        return (
+          <div key={ex.id} style={{ background: C.chip, borderRadius: 12, padding: "10px 12px", marginBottom: 8 }}>
+            <p style={{ margin: 0, color: C.text, fontSize: 14, fontWeight: 600 }}>{ex.name}</p>
+            <p style={{ margin: "3px 0 0", color: C.cyan, fontSize: 12, fontFamily: "monospace" }}>
+              {w.length} sets: {w.map((t) => setText(ex.unit, t)).join("  ·  ")}
+            </p>
+            {ex.note && <p style={{ margin: "4px 0 0", color: C.muted, fontSize: 11 }}>{ex.note}</p>}
+          </div>
+        );
+      })}
+      <p style={{ margin: "8px 0 14px", color: C.muted, fontSize: 11 }}>Weights are suggestions based on your recent sessions and may adjust by the time you train.</p>
+      {onStart && <button onClick={onStart} style={bigBtn(true)}>Start this workout</button>}
+      <button onClick={onClose} style={{ width: "100%", padding: 10, background: "none", border: "none", color: C.muted, fontSize: 13 }}>Close</button>
+    </Sheet>
   );
 }
 

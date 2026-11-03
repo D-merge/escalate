@@ -12,7 +12,7 @@ import { loadState, saveState, requestPersistence, downloadBackup, parseBackup }
 import { randomQuote } from "./quotes.js";
 import { SkipSheet, Picker, RestTimer } from "./ui.jsx";
 import Setup from "./Setup.jsx";
-import { TrainHome, SwitchSheet, WorkoutScreen, ExerciseScreen, DoneScreen, SkippedScreen } from "./Train.jsx";
+import { TrainHome, PreviewSheet, SwitchSheet, WorkoutScreen, ExerciseScreen, DoneScreen, SkippedScreen } from "./Train.jsx";
 import Progress from "./Progress.jsx";
 import History from "./History.jsx";
 import Profile from "./Profile.jsx";
@@ -266,7 +266,7 @@ export default function App() {
       <TrainHome
         plan={plan} handled={handled} doneToday={doneToday} targetDate={targetDate} quote={quote}
         active={active} streak={streak} backupDue={backupDue}
-        score={score} level={level} nextLevel={nextLevel} upcoming={ahead} onScore={() => setTab("progress")}
+        score={score} level={level} nextLevel={nextLevel} upcoming={ahead} onScore={() => setTab("progress")} onPreview={(k) => setSheet({ kind: "preview", key: k })}
         onStart={start}
         onResume={() => setView({ name: "workout" })}
         onSkip={openSkip}
@@ -294,6 +294,17 @@ export default function App() {
         </div>
       )}
       {skipMeta && <SkipSheet name={skipMeta.name} reason={skipReason} setReason={setSkipReason} onCancel={() => setSkipMeta(null)} onConfirm={confirmSkip} />}
+      {sheet && sheet.kind === "preview" && (() => {
+        const isToday = !active && plan.kind === "workout" && plan.templateKey === sheet.key && targetDate === today;
+        return (
+          <PreviewSheet
+            workout={buildWorkout(s, sheet.key, today)}
+            title="Suggested sets for this workout"
+            onClose={() => setSheet(null)}
+            onStart={isToday ? () => start(sheet.key) : null}
+          />
+        );
+      })()}
       {sheet === "switch" && <SwitchSheet onPick={start} onClose={() => setSheet(null)} />}
       {sheet && sheet.kind === "add" && <Picker title="Add exercise" onPick={pickExercise} onClose={() => setSheet(null)} />}
       {sheet && sheet.kind === "swap" && <Picker title="Swap exercise" prefer={sheet.muscle} onPick={pickExercise} onClose={() => setSheet(null)} />}

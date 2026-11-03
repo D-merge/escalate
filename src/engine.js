@@ -4,7 +4,7 @@
 // the app to progress you faster or slower.
 // ---------------------------------------------------------------------------
 
-import { iso, addDays, dow, fmt, parse, weekStart, endOfMonthsAgo, monthLabel } from "./dates.js";
+import { iso, addDays, dow, diffDays, fmt, parse, weekStart, endOfMonthsAgo, monthLabel } from "./dates.js";
 import {
   LIBRARY, TEMPLATES, CLASS_ROTATION, FREE_ROTATION, DEFAULT_GOALS, LEVELS, MUSCLES, CORE_MUSCLES,
 } from "./program.js";
@@ -199,18 +199,49 @@ export const templateSetCount = (key) =>
 
 // ----- planning: what's next, or is it a rest day ---------------------------
 
-function pickFree(state) {
+// Muscles that need recovery time between sessions. Core, calves, glutes and
+// shoulders (mostly lateral / rear-delt work here) don't block a workout.
+const RECOVERY_MUSCLES = ["Chest", "Back", "Quads", "Hamstrings", "Biceps", "Triceps"];
+
+const templateMuscles = (key) => {
+  const set = new Set();
+  TEMPLATES[key].slots.forEach((sl) => {
+    const m = (lib(sl.name) || {}).muscle;
+    if (RECOVERY_MUSCLES.includes(m)) set.add(m);
+  });
+  return [...set];
+};
+
+// Most recent date each muscle was trained (done sessions, including manual logs), up to `date`.
+function lastTrained(state, date) {
+  const last = {};
+  state.sessions.forEach((s) => {
+    if (s.status !== "done" || s.type === "baseline" || s.date > date) return;
+    (s.exercises || []).forEach((e) => {
+      if (RECOVERY_MUSCLES.includes(e.muscle) && (!last[e.muscle] || s.date > last[e.muscle])) last[e.muscle] = s.date;
+    });
+  });
+  return last;
+}
+
+// Pick the free session whose muscles have had the most rest. Anything that
+// works a muscle trained yesterday (or today) is avoided while another option
+// has had at least a day off; ties go to the session done least recently.
+function pickFree(state, date) {
   const lastDone = {};
   state.sessions.forEach((s) => {
     if (s.templateKey && (!lastDone[s.templateKey] || s.date > lastDone[s.templateKey])) lastDone[s.templateKey] = s.date;
   });
-  let pick = FREE_ROTATION[0];
-  let pickDate = lastDone[pick] || "";
-  FREE_ROTATION.forEach((k) => {
-    const d = lastDone[k] || "";
-    if (d < pickDate) { pick = k; pickDate = d; }
-  });
-  return pick;
+  const trained = lastTrained(state, date);
+  const rested = (key) => {
+    const days = templateMuscles(key).map((m) => (trained[m] ? diffDays(date, trained[m]) : 99));
+    return days.length ? Math.min(...days) : 99;
+  };
+  const ranked = FREE_ROTATION.map((k, i) => ({ k, i, rest: rested(k), d: lastDone[k] || "" }));
+  const ok = ranked.filter((r) => r.rest >= 2);
+  const pool = ok.length ? ok : ranked.filter((r) => r.rest === Math.max(...ranked.map((x) => x.rest)));
+  pool.sort((x, y) => (x.d < y.d ? -1 : x.d > y.d ? 1 : x.i - y.i));
+  return pool[0].k;
 }
 
 export function planFor(state, date) {
@@ -219,7 +250,7 @@ export function planFor(state, date) {
   const trained = (d) => done.some((x) => x.date === d);
   const wk = weekStart(date);
   const weekCount = done.filter((x) => x.date >= wk && x.date < date).length;
-  const freeKey = pickFree(state);
+  const freeKey = pickFree(state, date);
 
   if ([1, 2, 3].every((k) => trained(addDays(date, -k)))) {
     return { kind: "rest", templateKey: freeKey, name: "Rest day", why: "Three training days in a row — recover." };
@@ -239,7 +270,7 @@ export function upcoming(state, startDate, n = 4) {
     const plan = planFor(sim, date);
     out.push({ date, plan });
     if (plan.kind === "workout") {
-      sim = { ...sim, sessions: [...sim.sessions, { id: "sim" + i, date, templateKey: plan.templateKey, type: "free", status: "done", exercises: [] }] };
+      sim = { ...sim, sessions: [...sim.sessions, { id: "sim" + i, date, templateKey: plan.templateKey, type: "free", status: "done", exercises: TEMPLATES[plan.templateKey].slots.map((sl) => ({ name: sl.name, muscle: (lib(sl.name) || {}).muscle, sets: [] })) }] };
     }
   }
   return out;
