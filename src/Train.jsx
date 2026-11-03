@@ -1,49 +1,78 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { Flame, Moon, SkipForward, ChevronRight, Timer, Info, Repeat2, Trash2, Plus } from "lucide-react";
 import { C, pillBtn, bigBtn, ghostBtn } from "./theme.js";
 import { TEMPLATES, FREE_ROTATION, LIBRARY } from "./program.js";
 import { fmt } from "./dates.js";
 import { templateSetCount, e1rm, unitLabel } from "./engine.js";
-import { Sun, Card, Label, Title, BackBtn, Badge, Screen, Sheet, SetRow } from "./ui.jsx";
+import { Hex, Sun, Card, Label, Title, BackBtn, Badge, Screen, Sheet, SetRow } from "./ui.jsx";
+import { gradCool } from "./theme.js";
 
 // ---------------------------------------------------------------- Train home
+// ---- swipeable cards (today / next workouts) -------------------------------
 
-export function TrainHome({ plan, handled, doneToday, targetDate, quote, active, streak, backupDue, onStart, onResume, onSkip, onManual, onSwitch, onBackup }) {
+function Carousel({ slides }) {
+  const [i, setI] = useState(0);
+  const ref = useRef(null);
+  const onScroll = () => {
+    const el = ref.current;
+    if (el) setI(Math.round(el.scrollLeft / el.clientWidth));
+  };
+  return (
+    <div>
+      <div ref={ref} onScroll={onScroll} style={{ display: "flex", overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", gap: 12 }}>
+        {slides.map((sl, k) => (
+          <div key={k} style={{ flex: "0 0 100%", scrollSnapAlign: "center", minWidth: 0 }}>{sl}</div>
+        ))}
+      </div>
+      {slides.length > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 6, marginTop: 10 }}>
+          {slides.map((_, k) => (
+            <div key={k} style={{ width: k === i ? 18 : 6, height: 6, borderRadius: 4, background: k === i ? C.pink : C.soft, transition: "width .2s" }} />
+          ))}
+          <span style={{ color: C.muted, fontSize: 11, marginLeft: 6 }}>{i === 0 ? "swipe for what's next →" : ""}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PreviewCard({ item }) {
+  const { date, plan } = item;
+  const rest = plan.kind === "rest";
+  const tpl = TEMPLATES[plan.templateKey];
+  return (
+    <Card style={{ padding: 20, height: "100%", boxSizing: "border-box", background: "linear-gradient(160deg,#2B1550,#1F0F3A)" }}>
+      <span style={{ background: C.chip, color: C.text, fontWeight: 800, fontSize: 11, padding: "5px 12px", borderRadius: 999, letterSpacing: "0.08em" }}>{fmt(date).toUpperCase()}</span>
+      {rest ? (
+        <>
+          <div style={{ margin: "22px 0 8px", display: "flex", alignItems: "center", gap: 10 }}>
+            <Moon size={26} color={C.muted} />
+            <h2 style={{ margin: 0, fontSize: 24, fontWeight: 800, fontStyle: "italic", color: C.text }}>Rest day</h2>
+          </div>
+          <p style={{ margin: 0, color: C.muted, fontSize: 13 }}>{plan.why}</p>
+        </>
+      ) : (
+        <>
+          <h2 style={{ margin: "22px 0 4px", fontSize: 24, fontWeight: 800, fontStyle: "italic", color: C.text }}>{tpl.name}</h2>
+          <p style={{ margin: "0 0 10px", color: C.muted, fontSize: 12 }}>{tpl.slots.length} exercises · about {templateSetCount(plan.templateKey)} sets</p>
+          {tpl.slots.map((sl) => (
+            <p key={sl.name} style={{ margin: "0 0 3px", color: C.text, fontSize: 13 }}>· {sl.name}</p>
+          ))}
+        </>
+      )}
+    </Card>
+  );
+}
+
+
+
+export function TrainHome({ plan, handled, doneToday, targetDate, quote, active, streak, backupDue, onStart, onResume, onSkip, onManual, onSwitch, onBackup, score, level, nextLevel, upcoming, onScore }) {
   const isRest = plan.kind === "rest";
   const tpl = TEMPLATES[plan.templateKey];
   const head = active ? "IN PROGRESS" : handled ? "UP NEXT · " + fmt(targetDate).toUpperCase() : "TODAY";
 
-  return (
-    <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>
-      <Sun />
-      <div style={{ margin: "12px 18px 14px", position: "relative", background: "rgba(43,21,80,0.85)", border: "1px solid " + C.pink + "80", borderRadius: 12, padding: "8px 14px" }}>
-        <Label style={{ color: C.pink, fontSize: 10, letterSpacing: "0.2em" }}>Gym wisdom</Label>
-        <p style={{ margin: "2px 0 0", fontSize: 12, fontStyle: "italic", color: C.text }}>{quote}</p>
-      </div>
-
-      <div style={{ padding: "0 18px 24px", position: "relative" }}>
-        <Label style={{ margin: "58px 0 8px" }}>This week</Label>
-        <div style={{ display: "flex", gap: 5, marginBottom: 6 }}>
-          {Array.from({ length: streak.goal }).map((_, i) => (
-            <div key={i} style={{ flex: 1, height: 6, borderRadius: 4, background: i < streak.thisWeek ? `linear-gradient(90deg,${C.cyan},${C.pink})` : C.soft }} />
-          ))}
-        </div>
-        <p style={{ margin: "0 0 16px", fontSize: 13, color: C.muted }}>{streak.thisWeek} of {streak.goal} completed this week</p>
-
-        {backupDue && (
-          <button onClick={onBackup} style={{ width: "100%", textAlign: "left", marginBottom: 14, padding: "10px 14px", borderRadius: 12, background: "transparent", border: "1px dashed " + C.orange, color: C.orange, fontSize: 12 }}>
-            It's been a while since your last backup — tap to export your data.
-          </button>
-        )}
-
-        {doneToday && !active && (
-          <p style={{ margin: "0 0 10px", color: C.green, fontSize: 13, fontWeight: 600 }}>Today's session is done. Nice work.</p>
-        )}
-        {handled && !doneToday && !active && (
-          <p style={{ margin: "0 0 10px", color: C.muted, fontSize: 13 }}>Today's workout was skipped.</p>
-        )}
-
-        <Card style={{ padding: 20, background: "linear-gradient(160deg,#3A1660,#2B1550 60%,#1A0B2E)" }}>
+  const card0 = (
+        <Card style={{ padding: 20, height: "100%", boxSizing: "border-box", background: "linear-gradient(160deg,#3A1660,#2B1550 60%,#1A0B2E)" }}>
           <span style={{ background: active ? C.orange : C.cyan, color: C.night, fontWeight: 800, fontSize: 11, padding: "5px 12px", borderRadius: 999, letterSpacing: "0.08em" }}>{head}</span>
 
           {active ? (
@@ -82,12 +111,62 @@ export function TrainHome({ plan, handled, doneToday, targetDate, quote, active,
             </>
           )}
         </Card>
+  );
+
+  return (
+    <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+      <Sun />
+      <div style={{ padding: "108px 18px 24px", position: "relative" }}>
+        <button onClick={onScore} style={{ width: "100%", textAlign: "left", background: "rgba(43,21,80,0.9)", border: "1px solid " + C.border, borderRadius: 18, padding: 14, margin: "0 0 16px", display: "flex", alignItems: "center", gap: 14 }}>
+          <Hex size={64} font={22}>{score}</Hex>
+          <div style={{ flex: 1 }}>
+            <Label style={{ fontSize: 10 }}>Strength score</Label>
+            <p style={{ margin: "2px 0 6px", color: C.text, fontSize: 18, fontWeight: 800 }}>{level.name}</p>
+            <div style={{ height: 5, borderRadius: 4, background: C.night }}>
+              <div style={{ height: "100%", width: (nextLevel ? Math.min(100, ((score - level.min) / (nextLevel.min - level.min)) * 100) : 100) + "%", borderRadius: 4, background: gradCool }} />
+            </div>
+            <p style={{ margin: "4px 0 0", color: C.muted, fontSize: 11 }}>{nextLevel ? `${nextLevel.min - score} to ${nextLevel.name}` : "Top level"}</p>
+          </div>
+        </button>
+
+        <Label style={{ margin: "0 0 8px" }}>This week</Label>
+        <div style={{ display: "flex", gap: 5, marginBottom: 6 }}>
+          {Array.from({ length: streak.goal }).map((_, i) => (
+            <div key={i} style={{ flex: 1, height: 6, borderRadius: 4, background: i < streak.thisWeek ? `linear-gradient(90deg,${C.cyan},${C.pink})` : C.soft }} />
+          ))}
+        </div>
+        <p style={{ margin: "0 0 16px", fontSize: 13, color: C.muted }}>{streak.thisWeek} of {streak.goal} completed this week</p>
+
+        {backupDue && (
+          <button onClick={onBackup} style={{ width: "100%", textAlign: "left", marginBottom: 14, padding: "10px 14px", borderRadius: 12, background: "transparent", border: "1px dashed " + C.orange, color: C.orange, fontSize: 12 }}>
+            It's been a while since your last backup — tap to export your data.
+          </button>
+        )}
+
+        {doneToday && !active && (
+          <p style={{ margin: "0 0 10px", color: C.green, fontSize: 13, fontWeight: 600 }}>Today's session is done. Nice work.</p>
+        )}
+        {handled && !doneToday && !active && (
+          <p style={{ margin: "0 0 10px", color: C.muted, fontSize: 13 }}>Today's workout was skipped.</p>
+        )}
+
+        <Carousel
+          slides={[
+            card0,
+            ...upcoming.map((u) => <PreviewCard key={u.date} item={u} />),
+          ]}
+        />
 
         {!active && (
           <button onClick={onManual} style={{ width: "100%", marginTop: 14, padding: 12, borderRadius: 14, background: "transparent", border: "1px dashed " + C.border, color: C.text, fontSize: 13, fontWeight: 600 }}>
             + Log a workout manually
           </button>
         )}
+
+        <div style={{ marginTop: 22, background: "rgba(43,21,80,0.85)", border: "1px solid " + C.pink + "80", borderRadius: 12, padding: "10px 14px" }}>
+          <Label style={{ color: C.pink, fontSize: 10, letterSpacing: "0.2em" }}>Gym wisdom</Label>
+          <p style={{ margin: "3px 0 0", fontSize: 13, fontStyle: "italic", color: C.text }}>{quote}</p>
+        </div>
       </div>
     </div>
   );

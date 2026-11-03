@@ -230,6 +230,21 @@ export function planFor(state, date) {
   return { kind: "workout", templateKey: freeKey, name: TEMPLATES[freeKey].name, class: false, why: "Free session — your least recent workout" };
 }
 
+// The next `n` days of plans, assuming you train every workout day.
+export function upcoming(state, startDate, n = 4) {
+  let sim = state;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const date = addDays(startDate, i);
+    const plan = planFor(sim, date);
+    out.push({ date, plan });
+    if (plan.kind === "workout") {
+      sim = { ...sim, sessions: [...sim.sessions, { id: "sim" + i, date, templateKey: plan.templateKey, type: "free", status: "done", exercises: [] }] };
+    }
+  }
+  return out;
+}
+
 // ----- finishing / skipping -------------------------------------------------
 
 function advanceClass(state, key) {

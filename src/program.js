@@ -49,6 +49,12 @@ export const LIBRARY = [
 
   { name: "Plank (secs)", muscle: "Core", unit: "secs", step: 5, start: 0 },
   { name: "Hanging Knee Raise", muscle: "Core", unit: "bw", step: 2.5, start: 0 },
+  { name: "Side Plank (secs)", muscle: "Core", unit: "secs", step: 5, start: 0 },
+  { name: "Cable Crunch", muscle: "Core", unit: "kg", step: 2.5, start: 25 },
+  { name: "Dead Bug", muscle: "Core", unit: "bw", step: 2.5, start: 0 },
+
+  { name: "Weighted Calf Raise", muscle: "Calves", unit: "kg", step: 2.5, start: 30 },
+  { name: "Seated Calf Raise", muscle: "Calves", unit: "kg", step: 2.5, start: 20 },
 ];
 
 // Muscles shown in the strength score breakdown, in this order.
@@ -108,7 +114,9 @@ export const TEMPLATES = {
       { name: "Chin Ups", maxBased: true, amrapLast: true, sets: 4, reps: 6 },
       { name: "Lat Pulldown", sets: 3, reps: 10, start: 40 },
       { name: "Seated Row", sets: 3, reps: 10, start: 40 },
+      { name: "Rear Delt Fly", sets: 3, reps: 12, start: 6 },
       { name: "Biceps Curl", sets: 3, reps: 12, start: 10 },
+      { name: "Cable Crunch", sets: 3, reps: 12, start: 25 },
     ],
   },
   legs: {
@@ -118,6 +126,8 @@ export const TEMPLATES = {
       { name: "Single Leg Deadlift", sets: 3, reps: 10, start: 15 },
       { name: "Seated Leg Press", sets: 3, reps: 12, start: 72.5 },
       { name: "Hamstring Curl", sets: 3, reps: 12, start: 30 },
+      { name: "Weighted Calf Raise", sets: 3, reps: 15, start: 30 },
+      { name: "Plank (secs)", sets: 3, reps: 60, start: 0 },
     ],
   },
   push: {
@@ -125,17 +135,21 @@ export const TEMPLATES = {
     slots: [
       { name: "Dumbbell Bench Press", sets: 3, reps: 10, start: 25 },
       { name: "Incline DB Bench", sets: 3, reps: 10, start: 22.5 },
+      { name: "Landmine Press", sets: 3, reps: 10, start: 20 },
       { name: "Lateral Raise", sets: 3, reps: 12, start: 6 },
       { name: "Triceps Pushdown", sets: 3, reps: 12, start: 25 },
+      { name: "Hanging Knee Raise", sets: 3, reps: 10, start: 0 },
     ],
   },
   chins: {
     name: "Chins + Core", class: false,
     slots: [
       { name: "Chin Ups", maxBased: true, amrapLast: true, sets: 5, reps: 6 },
-      { name: "Hanging Knee Raise", sets: 3, reps: 10, start: 0 },
       { name: "Face Pull", sets: 3, reps: 12, start: 20 },
-      { name: "Plank (secs)", sets: 3, reps: 60, start: 0 },
+      { name: "Rear Delt Fly", sets: 3, reps: 12, start: 6 },
+      { name: "Biceps Curl", sets: 3, reps: 12, start: 10 },
+      { name: "Hanging Knee Raise", sets: 3, reps: 10, start: 0 },
+      { name: "Side Plank (secs)", sets: 3, reps: 45, start: 0 },
     ],
   },
 };

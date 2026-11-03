@@ -6,6 +6,7 @@ import { LIBRARY } from "./program.js";
 import {
   emptyState, uid, planFor, buildWorkout, completeSession, skipSession, streakInfo,
   prescribeExercise, slotFromLib, lastSummary, countable, lastBackupDays,
+  upcoming, muscleScores, overallFrom, levelFor,
 } from "./engine.js";
 import { loadState, saveState, requestPersistence, downloadBackup, parseBackup } from "./db.js";
 import { randomQuote } from "./quotes.js";
@@ -158,6 +159,9 @@ export default function App() {
   const targetDate = handled ? addDays(today, 1) : today;
   const plan = planFor(s, targetDate);
   const streak = streakInfo(s, today);
+  const score = overallFrom(muscleScores(s));
+  const { level, next: nextLevel } = levelFor(score);
+  const ahead = upcoming(s, targetDate, 4).slice(1);
   const bd = lastBackupDays(s, today);
   const backupDue = countable(s).length >= 3 && (bd === null || bd > 14);
 
@@ -262,6 +266,7 @@ export default function App() {
       <TrainHome
         plan={plan} handled={handled} doneToday={doneToday} targetDate={targetDate} quote={quote}
         active={active} streak={streak} backupDue={backupDue}
+        score={score} level={level} nextLevel={nextLevel} upcoming={ahead} onScore={() => setTab("progress")}
         onStart={start}
         onResume={() => setView({ name: "workout" })}
         onSkip={openSkip}
