@@ -19,7 +19,7 @@ export default function Setup({ onDone, onRestore, error }) {
     <div style={{ flex: 1, overflowY: "auto", position: "relative", padding: "0 20px 32px" }}>
       <Sun />
       <div style={{ height: 110 }} />
-      <h1 style={{ margin: "0 0 4px", fontSize: 30, fontWeight: 800, fontStyle: "italic", color: C.text, position: "relative" }}>Escalate</h1>
+      <h1 style={{ margin: "0 0 4px", fontSize: 30, fontWeight: 800, fontStyle: "italic", position: "relative", background: "linear-gradient(180deg,#fff 10%,#2DE2E6 45%,#FF3EA5 75%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent", filter: "drop-shadow(0 0 10px rgba(255,62,165,.6))" }}>Escalate</h1>
       <p style={{ margin: "0 0 20px", color: C.muted, fontSize: 13 }}>Your workouts, your numbers — saved only on this phone.</p>
 
       <button onClick={() => fileRef.current && fileRef.current.click()} style={{ ...pillBtn, width: "100%", padding: 11, marginBottom: 6, fontSize: 13 }}>

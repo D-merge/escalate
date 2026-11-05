@@ -10,7 +10,8 @@ import {
 } from "./engine.js";
 import { loadState, saveState, requestPersistence, downloadBackup, parseBackup } from "./db.js";
 import { randomQuote } from "./quotes.js";
-import { SkipSheet, Picker, RestTimer } from "./ui.jsx";
+import { SkipSheet, Picker, RestTimer, MusicToggle } from "./ui.jsx";
+import { startMusic, stopMusic } from "./synth.js";
 import Setup from "./Setup.jsx";
 import { TrainHome, PreviewSheet, SwitchSheet, WorkoutScreen, ExerciseScreen, DoneScreen, SkippedScreen } from "./Train.jsx";
 import Progress from "./Progress.jsx";
@@ -34,6 +35,10 @@ export default function App() {
   const [sheet, setSheet] = useState(null); // "switch" | {kind:"add"} | {kind:"swap", exId, muscle}
   const [rest, setRest] = useState(null);
   const [setupError, setSetupError] = useState("");
+  const [music, setMusic] = useState(false);
+  const toggleMusic = async () => {
+    if (music) { stopMusic(); setMusic(false); } else { setMusic(await startMusic()); }
+  };
   const quote = useMemo(randomQuote, []);
   const stateRef = useRef(null);
   const loaded = useRef(false);
@@ -281,6 +286,7 @@ export default function App() {
 
   return (
     <Shell>
+      <MusicToggle on={music} onClick={toggleMusic} />
       {body}
       {rest && (view.name === "exercise" || view.name === "workout") && <RestTimer until={rest} onClose={() => setRest(null)} />}
       {showTabs && (

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Check, Plus, Minus, ChevronLeft, Palmtree, SkipForward } from "lucide-react";
+import { Check, Plus, Minus, ChevronLeft, Palmtree, SkipForward, VolumeX } from "lucide-react";
 import { C, pillBtn, bigBtn } from "./theme.js";
 import { LIBRARY } from "./program.js";
 
@@ -7,7 +7,7 @@ export function Hex({ children, size = 64, color = C.cyan, font = 22 }) {
   const clip = "polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%)";
   return (
     <div style={{ width: size, height: size, position: "relative", flexShrink: 0 }}>
-      <div style={{ position: "absolute", inset: 0, background: color, clipPath: clip, boxShadow: "0 0 18px " + color }} />
+      <div style={{ position: "absolute", inset: 0, background: color, clipPath: clip, boxShadow: "0 0 18px " + color, filter: "drop-shadow(0 0 8px " + color + ")" }} />
       <div style={{ position: "absolute", inset: 3, background: C.night, clipPath: clip, display: "flex", alignItems: "center", justifyContent: "center", color: C.text, fontWeight: 700, fontSize: font, fontFamily: "monospace" }}>
         {children}
       </div>
@@ -16,13 +16,31 @@ export function Hex({ children, size = 64, color = C.cyan, font = 22 }) {
 }
 
 export function Sun() {
+  const bands = "repeating-linear-gradient(180deg, " + C.night + " 0px, " + C.night + " 2px, transparent 2px, transparent 7px)";
   return (
-    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 100, overflow: "hidden", pointerEvents: "none", opacity: 0.85 }}>
-      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", top: 8, width: 70, height: 70, borderRadius: 999, background: "linear-gradient(180deg,#FFE37D 0%,#FF8A3D 55%,#FF3EA5 100%)", boxShadow: "0 0 40px 6px rgba(255,138,61,0.5)" }} />
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: 44, backgroundImage: "repeating-linear-gradient(0deg, rgba(45,226,230,0.45) 0px, rgba(45,226,230,0.45) 1px, transparent 1px, transparent 6px)" }} />
-      <Palmtree size={30} strokeWidth={1.5} style={{ position: "absolute", left: 8, bottom: 0, color: C.night }} />
-      <Palmtree size={24} strokeWidth={1.5} style={{ position: "absolute", right: 10, bottom: 0, color: C.night, transform: "scaleX(-1)" }} />
+    <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 100, overflow: "hidden", pointerEvents: "none" }}>
+      <div style={{ position: "absolute", left: "50%", marginLeft: -38, top: 6, width: 76, height: 76, borderRadius: 999, background: "linear-gradient(180deg,#FFE37D 0%,#FF8A3D 50%,#FF3EA5 100%)", animation: "sunPulse 4s ease-in-out infinite" }} />
+      <div style={{ position: "absolute", left: "50%", marginLeft: -38, top: 44, width: 76, height: 38, borderRadius: "0 0 999px 999px", backgroundImage: bands }} />
+      <div style={{ position: "absolute", left: 0, right: 0, top: 56, height: 2, background: "linear-gradient(90deg,transparent,#FF3EA5,#2DE2E6,#FF3EA5,transparent)", boxShadow: "0 0 10px #FF3EA5" }} />
+      <div style={{ position: "absolute", left: 0, right: 0, top: 58, bottom: 0, overflow: "hidden", perspective: 70, background: "linear-gradient(180deg,#2A0F4A,#1A0B2E)" }}>
+        <div style={{ position: "absolute", left: "-60%", right: "-60%", top: 0, height: "260%", transformOrigin: "50% 0%", transform: "rotateX(62deg)", backgroundImage: "linear-gradient(rgba(45,226,230,.8) 1px, transparent 1px), linear-gradient(90deg, rgba(255,62,165,.75) 1px, transparent 1px)", backgroundSize: "100% 16px, 32px 100%", animation: "gridMove 1.2s linear infinite" }} />
+      </div>
+      <Palmtree size={30} strokeWidth={1.5} style={{ position: "absolute", left: 8, top: 28, color: "#0B0418", filter: "drop-shadow(0 0 4px #FF3EA5)" }} />
+      <Palmtree size={24} strokeWidth={1.5} style={{ position: "absolute", right: 10, top: 34, color: "#0B0418", filter: "drop-shadow(0 0 4px #2DE2E6)", transform: "scaleX(-1)" }} />
     </div>
+  );
+}
+
+export function MusicToggle({ on, onClick }) {
+  return (
+    <button onClick={onClick} aria-label={on ? "Turn music off" : "Turn music on"} style={{ position: "absolute", zIndex: 40, top: "calc(env(safe-area-inset-top) + 8px)", right: 10, height: 34, padding: "0 12px", borderRadius: 999, background: "rgba(26,11,46,.85)", border: "1px solid " + (on ? C.pink : C.border), color: on ? C.pink : C.muted, display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", boxShadow: on ? "0 0 12px rgba(255,62,165,.6)" : "none" }}>
+      {on ? (
+        <span style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 12 }}>
+          {[0, 0.2, 0.4, 0.1].map((d, k) => <span key={k} style={{ width: 3, height: 12, background: C.pink, borderRadius: 1, transformOrigin: "bottom", animation: "eq 0.7s ease-in-out " + d + "s infinite" }} />)}
+        </span>
+      ) : <VolumeX size={14} />}
+      {on ? "MUSIC ON" : "MUSIC"}
+    </button>
   );
 }
 
@@ -35,7 +53,7 @@ export const Label = ({ children, style }) => (
 );
 
 export const Title = ({ children, style }) => (
-  <h1 style={{ fontSize: 24, fontWeight: 800, fontStyle: "italic", color: C.text, margin: "0 0 14px", ...style }}>{children}</h1>
+  <h1 style={{ fontSize: 24, fontWeight: 800, fontStyle: "italic", color: C.text, margin: "0 0 14px", textShadow: "0 0 14px rgba(255,62,165,.55), 0 0 2px rgba(45,226,230,.6)", ...style }}>{children}</h1>
 );
 
 export const BackBtn = ({ onClick, children }) => (
